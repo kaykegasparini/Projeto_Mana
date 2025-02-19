@@ -3,8 +3,8 @@ import { ShoppingCart, MapPin, Phone, MessageSquare, Clock, Instagram, Facebook 
 import Cart from './components/Cart';
 import DeliveryForm from './components/DeliveryForm';
 import ScheduleModal from './components/ScheduleModal';
-import AcaiMonteOSeu from './assets/images/monte.jpg';
-import Combo from './assets/images/combo.jpg';
+import MonteOSeu from './assets/monte.jpg';
+import Combo from './assets/combo.jpg';
 
 interface CartItem {
   id: string;
@@ -12,6 +12,10 @@ interface CartItem {
   price: number;
   quantity: number;
   extras?: string[];
+  addons?: {
+    name: string;
+    price: number;
+  }[];
 }
 
 interface MenuItem {
@@ -26,6 +30,10 @@ interface MenuItem {
     sizes?: { size: string; price: number }[];
     toppings?: { name: string; price: number }[];
   };
+  addons?: {
+    name: string;
+    price: number;
+  }[];
 }
 
 function App() {
@@ -36,6 +44,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('artesanais');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   useEffect(() => {
@@ -83,15 +92,24 @@ function App() {
       setSelectedSize('');
       setSelectedToppings([]);
     } else {
-      setCartItems(prev => {
-        const existingItem = prev.find(i => i.id === item.id);
-        if (existingItem) {
-          return prev.map(i => 
-            i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-          );
-        }
-        return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1 }];
-      });
+      const selectedAddonItems = item.addons?.filter(addon => 
+        selectedAddons.includes(addon.name)
+      ) || [];
+
+      const addonsTotal = selectedAddonItems.reduce((total, addon) => 
+        total + addon.price, 0
+      );
+
+      const cartItem: CartItem = {
+        id: `${item.id}-${Date.now()}`,
+        name: item.name,
+        price: item.price + addonsTotal,
+        quantity: 1,
+        addons: selectedAddonItems
+      };
+
+      setCartItems(prev => [...prev, cartItem]);
+      setSelectedAddons([]);
     }
   };
 
@@ -119,6 +137,25 @@ function App() {
     );
   };
 
+  const handleAddonToggle = (addon: string) => {
+    setSelectedAddons(prev =>
+      prev.includes(addon)
+        ? prev.filter(a => a !== addon)
+        : [...prev, addon]
+    );
+  };
+
+  const commonAddons = [
+    { name: 'Bacon', price: 4 },
+    { name: 'Hambúrguer Extra', price: 8 },
+    { name: 'Queijo Extra', price: 3 },
+    { name: 'Alface', price: 1 },
+    { name: 'Tomate', price: 1 },
+    { name: 'Molho Caseiro', price: 2 },
+    { name: 'Cebola Caramelizada', price: 3 },
+    { name: 'Ovo', price: 2 }
+  ];
+
   const menuItems: MenuItem[] = [
     {
       id: 'acai1',
@@ -133,7 +170,7 @@ function App() {
       name: 'Açaí Power',
       description: 'Açaí 500ml com morango, banana, granola, leite em pó e leite condensado',
       price: 22,
-      image: 'https://images.unsplash.com/photo-1596463059283-da257325bab8?auto=format&fit=crop&w=800&q=80',
+      image: Combo,
       category: 'acai-combos'
     },
     {
@@ -141,7 +178,7 @@ function App() {
       name: 'Açaí Nutella',
       description: 'Açaí 500ml com nutella, morango, granola e leite condensado',
       price: 25,
-      image: 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=800&q=80',
+      image: Combo,
       category: 'acai-combos'
     },
     {
@@ -149,7 +186,7 @@ function App() {
       name: 'Monte Seu Açaí',
       description: 'Escolha o tamanho e os acompanhamentos do seu açaí',
       price: 0,
-      image: AcaiMonteOSeu,
+      image: MonteOSeu,
       category: 'acai-custom',
       customizable: true,
       options: {
@@ -178,7 +215,8 @@ function App() {
       description: 'Hambúrguer artesanal de costela 180g, queijo cheddar, bacon, alface, tomate e molho especial',
       price: 32,
       image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80',
-      category: 'artesanais'
+      category: 'artesanais',
+      addons: commonAddons
     },
     {
       id: 'h2',
@@ -186,15 +224,23 @@ function App() {
       description: 'Hambúrguer artesanal de costela 180g, queijo, cebola caramelizada e molho barbecue',
       price: 30,
       image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=800&q=80',
-      category: 'artesanais'
+      category: 'artesanais',
+      addons: commonAddons
     },
     {
       id: 'c1',
       name: 'Hot Dog Completo',
       description: 'Salsicha, purê, vinagrete, batata palha, milho, ervilha e molhos',
       price: 18,
-      image: 'https://www.brasilfashionnews.com.br/wp-content/uploads/2018/05/AuAu-Prensado-tres-queijos-com-bacon.jpg',
-      category: 'hotdog'
+      image: 'https://images.unsplash.com/photo-1619740455993-9d77a82c8559?auto=format&fit=crop&w=800&q=80',
+      category: 'hotdog',
+      addons: [
+        { name: 'Salsicha Extra', price: 4 },
+        { name: 'Bacon', price: 4 },
+        { name: 'Queijo Extra', price: 3 },
+        { name: 'Batata Palha Extra', price: 2 },
+        { name: 'Molho Caseiro', price: 2 }
+      ]
     },
     {
       id: 'm1',
@@ -202,7 +248,13 @@ function App() {
       description: 'Pão francês, presunto e queijo derretido',
       price: 12,
       image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=800&q=80',
-      category: 'mistos'
+      category: 'mistos',
+      addons: [
+        { name: 'Queijo Extra', price: 3 },
+        { name: 'Presunto Extra', price: 3 },
+        { name: 'Tomate', price: 1 },
+        { name: 'Orégano', price: 0.5 }
+      ]
     },
     {
       id: 'm2',
@@ -210,7 +262,15 @@ function App() {
       description: 'Pão francês, presunto, queijo, ovo, alface e tomate',
       price: 15,
       image: 'https://images.unsplash.com/photo-1553909489-cd47e0907980?auto=format&fit=crop&w=800&q=80',
-      category: 'mistos'
+      category: 'mistos',
+      addons: [
+        { name: 'Queijo Extra', price: 3 },
+        { name: 'Presunto Extra', price: 3 },
+        { name: 'Ovo Extra', price: 2 },
+        { name: 'Bacon', price: 4 },
+        { name: 'Alface', price: 1 },
+        { name: 'Tomate', price: 1 }
+      ]
     },
     {
       id: 'l1',
@@ -218,7 +278,14 @@ function App() {
       description: 'Calabresa fatiada, queijo, vinagrete e molho',
       price: 25,
       image: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
-      category: 'calabresa'
+      category: 'calabresa',
+      addons: [
+        { name: 'Calabresa Extra', price: 6 },
+        { name: 'Queijo Extra', price: 3 },
+        { name: 'Cebola', price: 1 },
+        { name: 'Vinagrete Extra', price: 2 },
+        { name: 'Molho Caseiro', price: 2 }
+      ]
     },
     {
       id: 'f1',
@@ -226,7 +293,15 @@ function App() {
       description: 'Peito de frango grelhado, queijo, alface, tomate e maionese especial',
       price: 28,
       image: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?auto=format&fit=crop&w=800&q=80',
-      category: 'frango'
+      category: 'frango',
+      addons: [
+        { name: 'Frango Extra', price: 7 },
+        { name: 'Queijo Extra', price: 3 },
+        { name: 'Bacon', price: 4 },
+        { name: 'Alface', price: 1 },
+        { name: 'Tomate', price: 1 },
+        { name: 'Molho Caseiro', price: 2 }
+      ]
     },
     {
       id: 'cf1',
@@ -234,7 +309,14 @@ function App() {
       description: 'Contra filé fatiado, queijo, cebola grelhada e molho',
       price: 35,
       image: 'https://images.unsplash.com/photo-1600555379765-f82335a7b1b0?auto=format&fit=crop&w=800&q=80',
-      category: 'contrafile'
+      category: 'contrafile',
+      addons: [
+        { name: 'Contra Filé Extra', price: 10 },
+        { name: 'Queijo Extra', price: 3 },
+        { name: 'Bacon', price: 4 },
+        { name: 'Cebola Caramelizada', price: 3 },
+        { name: 'Molho Caseiro', price: 2 }
+      ]
     },
     {
       id: 'b1',
@@ -242,7 +324,13 @@ function App() {
       description: 'Rosbife, queijo derretido, tomate e molho especial',
       price: 22,
       image: 'https://images.unsplash.com/photo-1481070414801-51fd732d7184?auto=format&fit=crop&w=800&q=80',
-      category: 'bauru'
+      category: 'bauru',
+      addons: [
+        { name: 'Rosbife Extra', price: 8 },
+        { name: 'Queijo Extra', price: 3 },
+        { name: 'Tomate', price: 1 },
+        { name: 'Molho Caseiro', price: 2 }
+      ]
     }
   ];
 
@@ -325,7 +413,17 @@ function App() {
               .filter(item => item.category === selectedCategory)
               .map(item => (
                 <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-[1.02]">
-                  <img src={item.image} alt={item.name} className="w-full h-48 object-cover" />
+                  <div className={`relative ${item.category.includes('acai') ? 'h-96' : 'h-48'}`}>
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      className={`w-full h-full ${
+                        item.category.includes('acai') 
+                          ? 'object-contain bg-purple-50 p-4' 
+                          : 'object-cover'
+                      }`}
+                    />
+                  </div>
                   <div className="p-4">
                     <h3 className="text-xl font-semibold mb-2">{item.name}</h3>
                     <p className="text-gray-600 mb-2 text-sm">{item.description}</p>
@@ -399,7 +497,53 @@ function App() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-gray-800 font-bold mb-4">R$ {item.price.toFixed(2)}</p>
+                      <>
+                        <p className="text-gray-800 font-bold mb-4">R$ {item.price.toFixed(2)}</p>
+                        
+                        {item.addons && (
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Adicionais:
+                            </label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {item.addons.map(addon => (
+                                <label
+                                  key={addon.name}
+                                  className={`flex items-center p-2 rounded-lg cursor-pointer transition-all ${
+                                    selectedAddons.includes(addon.name)
+                                      ? 'bg-orange-50 border-2 border-orange-500'
+                                      : 'bg-gray-50 border-2 border-gray-200 hover:border-orange-200'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedAddons.includes(addon.name)}
+                                    onChange={() => handleAddonToggle(addon.name)}
+                                    className="sr-only"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium text-sm">{addon.name}</div>
+                                    <div className="text-xs text-gray-600">
+                                      +R$ {addon.price.toFixed(2)}
+                                    </div>
+                                  </div>
+                                  <div className={`w-5 h-5 rounded-full border-2 ml-2 flex items-center justify-center transition-all ${
+                                    selectedAddons.includes(addon.name)
+                                      ? 'border-orange-500 bg-orange-500'
+                                      : 'border-gray-300'
+                                  }`}>
+                                    {selectedAddons.includes(addon.name) && (
+                                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                     
                     <button

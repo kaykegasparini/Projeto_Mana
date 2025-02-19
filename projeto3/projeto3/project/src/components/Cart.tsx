@@ -8,6 +8,10 @@ interface CartItem {
   price: number;
   quantity: number;
   extras?: string[];
+  addons?: {
+    name: string;
+    price: number;
+  }[];
 }
 
 interface CartProps {
@@ -44,6 +48,9 @@ const Cart: React.FC<CartProps> = ({
       message += `${item.name} x${item.quantity}: R$ ${(item.price * item.quantity).toFixed(2)}\n`;
       if (item.extras && item.extras.length > 0) {
         message += `  Acompanhamentos: ${item.extras.join(', ')}\n`;
+      }
+      if (item.addons && item.addons.length > 0) {
+        message += `  Adicionais: ${item.addons.map(addon => addon.name).join(', ')}\n`;
       }
     });
     
@@ -86,37 +93,57 @@ const Cart: React.FC<CartProps> = ({
             ) : (
               <div className="space-y-4">
                 {items.map(item => (
-                  <div key={item.id} className="flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{item.name}</h3>
-                      <p className="text-gray-600">R$ {item.price.toFixed(2)}</p>
-                      {item.extras && item.extras.length > 0 && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          Acompanhamentos: {item.extras.join(', ')}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
+                  <div key={item.id} className="flex flex-col bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{item.name}</h3>
+                        <p className="text-gray-600">R$ {item.price.toFixed(2)}</p>
+                        {item.extras && item.extras.length > 0 && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            Acompanhamentos: {item.extras.join(', ')}
+                          </p>
+                        )}
+                        {item.addons && item.addons.length > 0 && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            Adicionais: {item.addons.map(addon => addon.name).join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <Minus size={16} />
+                        </button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <button
+                          onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
                       <button
-                        onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                        className="p-1 hover:bg-gray-200 rounded"
+                        onClick={() => onRemove(item.id)}
+                        className="text-red-500 hover:bg-red-50 p-2 rounded"
                       >
-                        <Minus size={16} />
-                      </button>
-                      <span className="w-8 text-center">{item.quantity}</span>
-                      <button
-                        onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                        className="p-1 hover:bg-gray-200 rounded"
-                      >
-                        <Plus size={16} />
+                        <X size={20} />
                       </button>
                     </div>
-                    <button
-                      onClick={() => onRemove(item.id)}
-                      className="text-red-500 hover:bg-red-50 p-2 rounded"
-                    >
-                      <X size={20} />
-                    </button>
+                    {(item.extras?.length > 0 || item.addons?.length > 0) && (
+                      <div className="mt-2 text-sm text-gray-500">
+                        <p className="font-medium">Detalhes do item:</p>
+                        <ul className="list-disc list-inside">
+                          {item.extras?.map(extra => (
+                            <li key={extra}>{extra}</li>
+                          ))}
+                          {item.addons?.map(addon => (
+                            <li key={addon.name}>{addon.name} (+R$ {addon.price.toFixed(2)})</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
