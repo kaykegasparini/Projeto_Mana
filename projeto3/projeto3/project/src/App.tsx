@@ -6,6 +6,7 @@ import ScheduleModal from './components/ScheduleModal';
 import MonteOSeu from './assets/monte.jpg';
 import Combo from './assets/combo.jpg';
 
+
 interface CartItem {
   id: string;
   name: string;
@@ -36,6 +37,10 @@ interface MenuItem {
   }[];
 }
 
+interface SelectedAddonsMap {
+  [key: string]: string[];
+}
+
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -44,7 +49,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('artesanais');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
-  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<SelectedAddonsMap>({});
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   useEffect(() => {
@@ -92,8 +97,9 @@ function App() {
       setSelectedSize('');
       setSelectedToppings([]);
     } else {
+      const itemAddons = selectedAddons[item.id] || [];
       const selectedAddonItems = item.addons?.filter(addon => 
-        selectedAddons.includes(addon.name)
+        itemAddons.includes(addon.name)
       ) || [];
 
       const addonsTotal = selectedAddonItems.reduce((total, addon) => 
@@ -109,7 +115,11 @@ function App() {
       };
 
       setCartItems(prev => [...prev, cartItem]);
-      setSelectedAddons([]);
+      // Clear only the add-ons for this specific item
+      setSelectedAddons(prev => ({
+        ...prev,
+        [item.id]: []
+      }));
     }
   };
 
@@ -137,15 +147,21 @@ function App() {
     );
   };
 
-  const handleAddonToggle = (addon: string) => {
-    setSelectedAddons(prev =>
-      prev.includes(addon)
-        ? prev.filter(a => a !== addon)
-        : [...prev, addon]
-    );
+  const handleAddonToggle = (itemId: string, addon: string) => {
+    setSelectedAddons(prev => {
+      const currentAddons = prev[itemId] || [];
+      const newAddons = currentAddons.includes(addon)
+        ? currentAddons.filter(a => a !== addon)
+        : [...currentAddons, addon];
+      
+      return {
+        ...prev,
+        [itemId]: newAddons
+      };
+    });
   };
 
-  const commonAddons = [
+  const burgerAddons = [
     { name: 'Bacon', price: 4 },
     { name: 'Hambúrguer Extra', price: 8 },
     { name: 'Queijo Extra', price: 3 },
@@ -154,6 +170,53 @@ function App() {
     { name: 'Molho Caseiro', price: 2 },
     { name: 'Cebola Caramelizada', price: 3 },
     { name: 'Ovo', price: 2 }
+  ];
+
+  const hotdogAddons = [
+    { name: 'Salsicha Extra', price: 4 },
+    { name: 'Bacon', price: 4 },
+    { name: 'Queijo Extra', price: 3 },
+    { name: 'Batata Palha Extra', price: 2 },
+    { name: 'Molho Caseiro', price: 2 }
+  ];
+
+  const mistoAddons = [
+    { name: 'Queijo Extra', price: 3 },
+    { name: 'Presunto Extra', price: 3 },
+    { name: 'Tomate', price: 1 },
+    { name: 'Orégano', price: 0.5 }
+  ];
+
+  const calabresaAddons = [
+    { name: 'Calabresa Extra', price: 6 },
+    { name: 'Queijo Extra', price: 3 },
+    { name: 'Cebola', price: 1 },
+    { name: 'Vinagrete Extra', price: 2 },
+    { name: 'Molho Caseiro', price: 2 }
+  ];
+
+  const frangoAddons = [
+    { name: 'Frango Extra', price: 7 },
+    { name: 'Queijo Extra', price: 3 },
+    { name: 'Bacon', price: 4 },
+    { name: 'Alface', price: 1 },
+    { name: 'Tomate', price: 1 },
+    { name: 'Molho Caseiro', price: 2 }
+  ];
+
+  const contrafileAddons = [
+    { name: 'Contra Filé Extra', price: 10 },
+    { name: 'Queijo Extra', price: 3 },
+    { name: 'Bacon', price: 4 },
+    { name: 'Cebola Caramelizada', price: 3 },
+    { name: 'Molho Caseiro', price: 2 }
+  ];
+
+  const bauruAddons = [
+    { name: 'Rosbife Extra', price: 8 },
+    { name: 'Queijo Extra', price: 3 },
+    { name: 'Tomate', price: 1 },
+    { name: 'Molho Caseiro', price: 2 }
   ];
 
   const menuItems: MenuItem[] = [
@@ -216,7 +279,7 @@ function App() {
       price: 32,
       image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80',
       category: 'artesanais',
-      addons: commonAddons
+      addons: burgerAddons
     },
     {
       id: 'h2',
@@ -225,7 +288,7 @@ function App() {
       price: 30,
       image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=800&q=80',
       category: 'artesanais',
-      addons: commonAddons
+      addons: burgerAddons
     },
     {
       id: 'c1',
@@ -234,13 +297,7 @@ function App() {
       price: 18,
       image: 'https://images.unsplash.com/photo-1619740455993-9d77a82c8559?auto=format&fit=crop&w=800&q=80',
       category: 'hotdog',
-      addons: [
-        { name: 'Salsicha Extra', price: 4 },
-        { name: 'Bacon', price: 4 },
-        { name: 'Queijo Extra', price: 3 },
-        { name: 'Batata Palha Extra', price: 2 },
-        { name: 'Molho Caseiro', price: 2 }
-      ]
+      addons: hotdogAddons
     },
     {
       id: 'm1',
@@ -249,12 +306,7 @@ function App() {
       price: 12,
       image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=800&q=80',
       category: 'mistos',
-      addons: [
-        { name: 'Queijo Extra', price: 3 },
-        { name: 'Presunto Extra', price: 3 },
-        { name: 'Tomate', price: 1 },
-        { name: 'Orégano', price: 0.5 }
-      ]
+      addons: mistoAddons
     },
     {
       id: 'm2',
@@ -263,14 +315,7 @@ function App() {
       price: 15,
       image: 'https://images.unsplash.com/photo-1553909489-cd47e0907980?auto=format&fit=crop&w=800&q=80',
       category: 'mistos',
-      addons: [
-        { name: 'Queijo Extra', price: 3 },
-        { name: 'Presunto Extra', price: 3 },
-        { name: 'Ovo Extra', price: 2 },
-        { name: 'Bacon', price: 4 },
-        { name: 'Alface', price: 1 },
-        { name: 'Tomate', price: 1 }
-      ]
+      addons: mistoAddons
     },
     {
       id: 'l1',
@@ -279,13 +324,7 @@ function App() {
       price: 25,
       image: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
       category: 'calabresa',
-      addons: [
-        { name: 'Calabresa Extra', price: 6 },
-        { name: 'Queijo Extra', price: 3 },
-        { name: 'Cebola', price: 1 },
-        { name: 'Vinagrete Extra', price: 2 },
-        { name: 'Molho Caseiro', price: 2 }
-      ]
+      addons: calabresaAddons
     },
     {
       id: 'f1',
@@ -294,14 +333,7 @@ function App() {
       price: 28,
       image: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?auto=format&fit=crop&w=800&q=80',
       category: 'frango',
-      addons: [
-        { name: 'Frango Extra', price: 7 },
-        { name: 'Queijo Extra', price: 3 },
-        { name: 'Bacon', price: 4 },
-        { name: 'Alface', price: 1 },
-        { name: 'Tomate', price: 1 },
-        { name: 'Molho Caseiro', price: 2 }
-      ]
+      addons: frangoAddons
     },
     {
       id: 'cf1',
@@ -310,13 +342,7 @@ function App() {
       price: 35,
       image: 'https://images.unsplash.com/photo-1600555379765-f82335a7b1b0?auto=format&fit=crop&w=800&q=80',
       category: 'contrafile',
-      addons: [
-        { name: 'Contra Filé Extra', price: 10 },
-        { name: 'Queijo Extra', price: 3 },
-        { name: 'Bacon', price: 4 },
-        { name: 'Cebola Caramelizada', price: 3 },
-        { name: 'Molho Caseiro', price: 2 }
-      ]
+      addons: contrafileAddons
     },
     {
       id: 'b1',
@@ -325,12 +351,7 @@ function App() {
       price: 22,
       image: 'https://images.unsplash.com/photo-1481070414801-51fd732d7184?auto=format&fit=crop&w=800&q=80',
       category: 'bauru',
-      addons: [
-        { name: 'Rosbife Extra', price: 8 },
-        { name: 'Queijo Extra', price: 3 },
-        { name: 'Tomate', price: 1 },
-        { name: 'Molho Caseiro', price: 2 }
-      ]
+      addons: bauruAddons
     }
   ];
 
@@ -510,15 +531,15 @@ function App() {
                                 <label
                                   key={addon.name}
                                   className={`flex items-center p-2 rounded-lg cursor-pointer transition-all ${
-                                    selectedAddons.includes(addon.name)
+                                    (selectedAddons[item.id] || []).includes(addon.name)
                                       ? 'bg-orange-50 border-2 border-orange-500'
                                       : 'bg-gray-50 border-2 border-gray-200 hover:border-orange-200'
                                   }`}
                                 >
                                   <input
                                     type="checkbox"
-                                    checked={selectedAddons.includes(addon.name)}
-                                    onChange={() => handleAddonToggle(addon.name)}
+                                    checked={(selectedAddons[item.id] || []).includes(addon.name)}
+                                    onChange={() => handleAddonToggle(item.id, addon.name)}
                                     className="sr-only"
                                   />
                                   <div className="flex-1">
@@ -528,11 +549,11 @@ function App() {
                                     </div>
                                   </div>
                                   <div className={`w-5 h-5 rounded-full border-2 ml-2 flex items-center justify-center transition-all ${
-                                    selectedAddons.includes(addon.name)
+                                    (selectedAddons[item.id] || []).includes(addon.name)
                                       ? 'border-orange-500 bg-orange-500'
                                       : 'border-gray-300'
                                   }`}>
-                                    {selectedAddons.includes(addon.name) && (
+                                    {(selectedAddons[item.id] || []).includes(addon.name) && (
                                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                       </svg>
